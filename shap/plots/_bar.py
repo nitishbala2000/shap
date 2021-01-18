@@ -17,7 +17,7 @@ from .. import Explanation, Cohorts
 # TODO: improve the bar chart to look better like the waterfall plot with numbers inside the bars when they fit
 # TODO: Have the Explanation object track enough data so that we can tell (and so show) how many instances are in each cohort
 def bar(shap_values, max_display=10, order=Explanation.abs, clustering=None, clustering_cutoff=0.5,
-        merge_cohorts=False, show_data="auto", show=True):
+        merge_cohorts=False, show_data="auto", show=True, ax=None):
     """ Create a bar plot of a set of SHAP values.
 
     If a single sample is passed then we plot the SHAP values as a bar chart. If an
@@ -36,7 +36,11 @@ def bar(shap_values, max_display=10, order=Explanation.abs, clustering=None, clu
 
     show : bool
         If show is set to False then we don't call the matplotlib.pyplot.show() function. This allows
-        further customization of the plot by the caller after the bar() function is finished. 
+        further customization of the plot by the caller after the bar() function is finished.
+
+    ax : matplotlib Axes object
+         Optionally specify an existing matplotlib Axes object, into which the plot will be placed.
+         If none, use current figure and axes
 
     """
 
@@ -49,6 +53,12 @@ def bar(shap_values, max_display=10, order=Explanation.abs, clustering=None, clu
         cohorts = shap_values.cohorts
     else:
         assert isinstance(shap_values, dict), "You must pass an Explanation object, Cohorts object, or dictionary to bar plot!"
+
+    if ax:
+        fig = ax.get_figure()
+    else:
+        ax = pl.gca()
+        fig = pl.gcf()
 
     # unpack our list of Explanation objects we need to plot
     cohort_labels = list(cohorts.keys())
@@ -181,12 +191,12 @@ def bar(shap_values, max_display=10, order=Explanation.abs, clustering=None, clu
 
     # compute our figure size based on how many features we are showing
     row_height = 0.5
-    pl.gcf().set_size_inches(8, num_features * row_height * np.sqrt(len(values)) + 1.5)
+    fig.set_size_inches(8, num_features * row_height * np.sqrt(len(values)) + 1.5)
 
     # if negative values are present then we draw a vertical line to mark 0, otherwise the axis does this for us...
     negative_values_present = np.sum(values[:,feature_order[:num_features]] < 0) > 0
     if negative_values_present:
-        pl.axvline(0, 0, 1, color="#000000", linestyle="-", linewidth=1, zorder=1)
+        ax.axvline(0, 0, 1, color="#000000", linestyle="-", linewidth=1, zorder=1)
 
     # draw the bars
     patterns = (None, '\\\\', '++', 'xx', '////', '*', 'o', 'O', '.', '-')
@@ -194,7 +204,7 @@ def bar(shap_values, max_display=10, order=Explanation.abs, clustering=None, clu
     bar_width = total_width / len(values)
     for i in range(len(values)):
         ypos_offset = - ((i - len(values) / 2) * bar_width + bar_width / 2)
-        pl.barh(
+        ax.barh(
             y_pos + ypos_offset, values[i,feature_inds],
             bar_width, align='center',
             color=[colors.blue_rgb if values[i,feature_inds[j]] <= 0 else colors.red_rgb for j in range(len(y_pos))],
@@ -202,11 +212,11 @@ def bar(shap_values, max_display=10, order=Explanation.abs, clustering=None, clu
         )
 
     # draw the yticks (the 1e-8 is so matplotlib 3.3 doesn't try and collapse the ticks)
-    pl.yticks(list(y_pos) + list(y_pos + 1e-8), yticklabels + [l.split('=')[-1] for l in yticklabels], fontsize=13)
+    ax.set_yticks(list(y_pos) + list(y_pos + 1e-8))
+    ax.set_yticklabels(yticklabels + [l.split('=')[-1] for l in yticklabels], fontsize=13)
 
-    xlen = pl.xlim()[1] - pl.xlim()[0]
-    fig = pl.gcf()
-    ax = pl.gca()
+    xlen = ax.get_xlim()[1] - ax.get_xlim()[0]
+
     #xticks = ax.get_xticks()
     bbox = ax.get_window_extent().transformed(fig.dpi_scale_trans.inverted())
     width, height = bbox.width, bbox.height
@@ -217,13 +227,13 @@ def bar(shap_values, max_display=10, order=Explanation.abs, clustering=None, clu
         for j in range(len(y_pos)):
             ind = feature_order[j]
             if values[i,ind] < 0:
-                pl.text(
+                ax.text(
                     values[i,ind] - (5/72)*bbox_to_xscale, y_pos[j] + ypos_offset, format_value(values[i,ind], '%+0.02f'),
                     horizontalalignment='right', verticalalignment='center', color=colors.blue_rgb,
                     fontsize=12
                 )
             else:
-                pl.text(
+                ax.text(
                     values[i,ind] + (5/72)*bbox_to_xscale, y_pos[j] + ypos_offset, format_value(values[i,ind], '%+0.02f'),
                     horizontalalignment='left', verticalalignment='center', color=colors.red_rgb,
                     fontsize=12
@@ -231,7 +241,7 @@ def bar(shap_values, max_display=10, order=Explanation.abs, clustering=None, clu
 
     # put horizontal lines for each feature row
     for i in range(num_features):
-        pl.axhline(i+1, color="#888888", lw=0.5, dashes=(1, 5), zorder=-1)
+        ax.axhline(i+1, color="#888888", lw=0.5, dashes=(1, 5), zorder=-1)
     
     if features is not None:
         features = list(features)
@@ -244,33 +254,33 @@ def bar(shap_values, max_display=10, order=Explanation.abs, clustering=None, clu
             except:
                 pass # features[i] must not be a number
     
-    pl.gca().xaxis.set_ticks_position('bottom')
-    pl.gca().yaxis.set_ticks_position('none')
-    pl.gca().spines['right'].set_visible(False)
-    pl.gca().spines['top'].set_visible(False)
+    ax.xaxis.set_ticks_position('bottom')
+    ax.yaxis.set_ticks_position('none')
+    ax.spines['right'].set_visible(False)
+    ax.spines['top'].set_visible(False)
     if negative_values_present:
-        pl.gca().spines['left'].set_visible(False)
-    pl.gca().tick_params('x', labelsize=11)
+        ax.spines['left'].set_visible(False)
+    ax.tick_params('x', labelsize=11)
 
-    xmin,xmax = pl.gca().get_xlim()
-    ymin,ymax = pl.gca().get_ylim()
+    xmin,xmax = ax.get_xlim()
+    ymin,ymax = ax.get_ylim()
     
     if negative_values_present:
-        pl.gca().set_xlim(xmin - (xmax-xmin)*0.05, xmax + (xmax-xmin)*0.05)
+        ax.set_xlim(xmin - (xmax-xmin)*0.05, xmax + (xmax-xmin)*0.05)
     else:
-        pl.gca().set_xlim(xmin, xmax + (xmax-xmin)*0.05)
+        ax.set_xlim(xmin, xmax + (xmax-xmin)*0.05)
     
     # if features is None:
     #     pl.xlabel(labels["GLOBAL_VALUE"], fontsize=13)
     # else:
-    pl.xlabel(xlabel, fontsize=13)
+    ax.set_xlabel(xlabel, fontsize=13)
 
     if len(values) > 1:
-        pl.legend(fontsize=12)
+        ax.legend(fontsize=12)
 
     # color the y tick labels that have the feature values as gray
     # (these fall behind the black ones with just the feature name)
-    tick_labels = pl.gca().yaxis.get_majorticklabels()
+    tick_labels = ax.yaxis.get_majorticklabels()
     for i in range(num_features):
         tick_labels[i].set_color("#999999")
 
@@ -282,15 +292,15 @@ def bar(shap_values, max_display=10, order=Explanation.abs, clustering=None, clu
         ylines,xlines = dendrogram_coords(feature_pos, partition_tree)
         
         # plot the distance cut line above which we don't show tree edges
-        xmin,xmax = pl.xlim()
+        xmin,xmax = ax.get_xlim()
         xlines_min,xlines_max = np.min(xlines),np.max(xlines)
         ct_line_pos = (clustering_cutoff / (xlines_max - xlines_min)) * 0.1 * (xmax - xmin) + xmax
-        pl.text(
+        ax.text(
             ct_line_pos + 0.005 * (xmax - xmin), (ymax - ymin)/2, "Clustering cutoff = " + format_value(clustering_cutoff, '%0.02f'),
             horizontalalignment='left', verticalalignment='center', color="#999999",
             fontsize=12, rotation=-90
         )
-        l = pl.axvline(ct_line_pos, color="#dddddd", dashes=(1, 1))
+        l = ax.axvline(ct_line_pos, color="#dddddd", dashes=(1, 1))
         l.set_clip_on(False)
         
         for (xline, yline) in zip(xlines, ylines):
@@ -303,7 +313,7 @@ def bar(shap_values, max_display=10, order=Explanation.abs, clustering=None, clu
 
                 # only draw if we are not going past the bottom of the plot
                 if yline.max() < max_display:
-                    l = pl.plot(
+                    l = ax.plot(
                         xv * 0.1 * (xmax - xmin) + xmax,
                         max_display - np.array(yline),
                         color="#999999"
@@ -312,7 +322,7 @@ def bar(shap_values, max_display=10, order=Explanation.abs, clustering=None, clu
                         v.set_clip_on(False)
     
     if show:
-        pl.show()
+        fig.show()
 
 
 

@@ -10,7 +10,9 @@ from .utils import explainer  # pytest fixture: do not remove
 @pytest.mark.mpl_image_compare
 def test_simple_bar(explainer):
     shap_values = explainer(explainer.data)
-    fig = plt.figure()
-    shap.plots.bar(shap_values, show=False)
+
+    #Change : pass figure and axis to function
+    fig, ax = plt.subplots(1, 1)
+    shap.plots.bar(shap_values, show=False, ax=ax)
     plt.tight_layout()
     return fig
