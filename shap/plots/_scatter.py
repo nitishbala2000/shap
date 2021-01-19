@@ -208,7 +208,7 @@ def scatter(shap_values, color="#1E88E5", hist=True, axis_color="#333333", cmap=
             ax.set_ylabel(labels['INTERACTION_EFFECT'] % (feature_names[ind1], feature_names[ind2]))
 
         if show:
-            pl.show()
+            fig.show()
         return
 
     assert shap_values_arr.shape[0] == features.shape[0], \
@@ -309,10 +309,10 @@ def scatter(shap_values, color="#1E88E5", hist=True, axis_color="#333333", cmap=
             tick_positions = np.array([cname_map[n] for n in cnames])
             tick_positions *= 1 - 1 / len(cnames)
             tick_positions += 0.5 * (chigh - clow) / (chigh - clow + 1)
-            cb = pl.colorbar(p, ticks=tick_positions, ax=ax)
+            cb = fig.colorbar(p, ticks=tick_positions, ax=ax)
             cb.set_ticklabels(cnames)
         else:
-            cb = pl.colorbar(p, ax=ax)
+            cb = fig.colorbar(p, ax=ax)
 
         cb.set_label(feature_names[interaction_index], size=13)
         cb.ax.tick_params(labelsize=11)
@@ -426,7 +426,7 @@ def scatter(shap_values, color="#1E88E5", hist=True, axis_color="#333333", cmap=
     if show:
         with warnings.catch_warnings(): # ignore expected matplotlib warnings
             warnings.simplefilter("ignore", RuntimeWarning)
-            pl.show()
+            fig.show()
 
 
 
@@ -561,7 +561,7 @@ def dependence_legacy(ind, shap_values=None, features=None, feature_names=None, 
             ax.set_ylabel(labels['INTERACTION_EFFECT'] % (feature_names[ind1], feature_names[ind2]))
 
         if show:
-            pl.show()
+            fig.show()
         return
 
     assert shap_values.shape[0] == features.shape[0], \
@@ -656,10 +656,10 @@ def dependence_legacy(ind, shap_values=None, features=None, feature_names=None, 
             if len(tick_positions) == 2:
                 tick_positions[0] -= 0.25
                 tick_positions[1] += 0.25
-            cb = pl.colorbar(p, ticks=tick_positions, ax=ax)
+            cb = fig.colorbar(p, ticks=tick_positions, ax=ax)
             cb.set_ticklabels(cnames)
         else:
-            cb = pl.colorbar(p, ax=ax)
+            cb = fig.colorbar(p, ax=ax)
 
         cb.set_label(feature_names[interaction_index], size=13)
         cb.ax.tick_params(labelsize=11)
@@ -719,4 +719,4 @@ def dependence_legacy(ind, shap_values=None, features=None, feature_names=None, 
     if show:
         with warnings.catch_warnings(): # ignore expected matplotlib warnings
             warnings.simplefilter("ignore", RuntimeWarning)
-            pl.show()
+            fig.show()

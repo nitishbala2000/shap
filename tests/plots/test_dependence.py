@@ -1,10 +1,12 @@
-import matplotlib
+import matplotlib.pyplot as plt
 import numpy as np
-matplotlib.use('Agg')
+#matplotlib.use('Agg')
 import shap
 
 def test_random_dependence():
-    shap.dependence_plot(0, np.random.randn(20, 5), np.random.randn(20, 5), show=False)
+    fig, ax = plt.subplots(1, 1)
+    shap.dependence_plot(0, np.random.randn(20, 5), np.random.randn(20, 5), show=False, ax=ax)
 
 def test_random_dependence_no_interaction():
-    shap.dependence_plot(0, np.random.randn(20, 5), np.random.randn(20, 5), show=False, interaction_index=None)
+    fig, ax = plt.subplots(1, 1)
+    shap.dependence_plot(0, np.random.randn(20, 5), np.random.randn(20, 5), show=False, interaction_index=None, ax=ax)

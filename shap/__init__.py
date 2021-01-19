@@ -51,8 +51,8 @@ else:
     #summary_plot = unsupported
     decision_plot = unsupported
     multioutput_decision_plot = unsupported
-    dependence_plot = unsupported
-    force_plot = unsupported
+    #dependence_plot = unsupported
+    #force_plot = unsupported
     initjs = unsupported
     save_html = unsupported
     image_plot = unsupported

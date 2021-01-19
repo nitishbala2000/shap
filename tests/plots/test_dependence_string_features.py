@@ -1,56 +1,68 @@
-import matplotlib
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
-matplotlib.use('Agg')
+#matplotlib.use('Agg')
 import shap
 
 
 def test_dependence_one_string_feature():
     X = _create_sample_dataset(string_features={"Sex"})
 
+    fig, ax = plt.subplots(1, 1)
+
     shap.dependence_plot(
         "Sex",
         np.random.randn(*X.values.shape),
         X,
         interaction_index="Age",
-        show=False
+        show=False,
+        ax=ax
     )
 
 
 def test_dependence_two_string_features():
     X = _create_sample_dataset(string_features={"Sex", "Blood group"})
 
+    fig, ax = plt.subplots(1, 1)
+
     shap.dependence_plot(
         "Sex",
         np.random.randn(*X.values.shape),
         X,
         interaction_index="Blood group",
-        show=False
+        show=False,
+        ax=ax
     )
 
 
 def test_dependence_one_string_feature_no_interaction():
     X = _create_sample_dataset(string_features={"Sex"})
 
+    fig, ax = plt.subplots(1, 1)
+
     shap.dependence_plot(
         "Sex",
         np.random.randn(*X.values.shape),
         X,
         interaction_index=None,
-        show=False
+        show=False,
+        ax=ax
     )
 
 
 def test_dependence_one_string_feature_auto_interaction():
     X = _create_sample_dataset(string_features={"Sex"})
 
+    fig, ax = plt.subplots(1, 1)
+
     shap.dependence_plot(
         "Sex",
         np.random.randn(*X.values.shape),
         X,
         interaction_index='auto',
-        show=False
+        show=False,
+        ax=ax
     )
 
 
