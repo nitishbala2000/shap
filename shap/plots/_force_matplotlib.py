@@ -12,7 +12,7 @@ except ImportError:
     pass
 
 
-def draw_bars(out_value, features, feature_type, width_separators, width_bar):
+def draw_bars(out_value, features, feature_type, width_separators, width_bar, ax):
     """Draw the bars and separators."""
     rectangle_list = []
     separator_list = []
@@ -63,6 +63,7 @@ def draw_bars(out_value, features, feature_type, width_separators, width_bar):
 
         line = plt.Polygon(points_rectangle, closed=True, fill=True,
                            facecolor=colors[0], linewidth=0)
+
         rectangle_list += [line]
 
         # Create seperator
@@ -72,6 +73,7 @@ def draw_bars(out_value, features, feature_type, width_separators, width_bar):
         
         line = plt.Polygon(points_separator, closed=None, fill=None,
                            edgecolor=colors[1], lw=3)
+
         separator_list += [line]
 
     return rectangle_list, separator_list
@@ -121,12 +123,13 @@ def draw_labels(fig, ax, out_value, features, feature_type, offset_text, total_e
         else:
             va_alignment = 'baseline'
 
-        text_out_val = plt.text(start_text - sign * offset_text,
+        text_out_val = ax.text(start_text - sign * offset_text,
                                 -0.15, text,
                                 fontsize=12, color=colors[0],
                                 horizontalalignment=alignement,
                                 va=va_alignment,
                                 rotation=text_rotation)
+
         text_out_val.set_bbox(dict(facecolor='none', edgecolor='none'))
         
         # We need to draw the plot to be able to get the size of the
@@ -134,6 +137,7 @@ def draw_labels(fig, ax, out_value, features, feature_type, offset_text, total_e
         fig.canvas.draw()
         box_size = text_out_val.get_bbox_patch().get_extents()\
                                .transformed(ax.transData.inverted())
+
         if feature_type == 'positive':
             box_end_ = box_size.get_points()[0][0]
         else:
@@ -194,10 +198,12 @@ def draw_labels(fig, ax, out_value, features, feature_type, offset_text, total_e
     cm = matplotlib.colors.LinearSegmentedColormap.from_list('cm', colors)
     
     _, Z2 = np.meshgrid(np.linspace(0, 10), np.linspace(-10, 10))
-    im = plt.imshow(Z2, interpolation='quadric', cmap=cm,
+
+    im = ax.imshow(Z2, interpolation='quadric', cmap=cm,
                     vmax=0.01, alpha=0.3,
                     origin='lower', extent=extent_shading,
                     clip_path=patch, clip_on=True, aspect='auto')
+
     im.set_clip_path(patch)
     
     return fig, ax
@@ -270,15 +276,17 @@ def draw_output_element(out_name, out_value, ax):
     font0 = FontProperties()
     font = font0.copy()
     font.set_weight('bold')
-    text_out_val = plt.text(out_value, 0.25, '{0:.2f}'.format(out_value),
+    text_out_val = ax.text(out_value, 0.25, '{0:.2f}'.format(out_value),
                             fontproperties=font,
                             fontsize=14,
                             horizontalalignment='center')
+
     text_out_val.set_bbox(dict(facecolor='white', edgecolor='white'))
     
-    text_out_val = plt.text(out_value, 0.33, out_name,
+    text_out_val = ax.text(out_value, 0.33, out_name,
                             fontsize=12, alpha=0.5,
                             horizontalalignment='center')
+
     text_out_val.set_bbox(dict(facecolor='white', edgecolor='white'))
 
 
@@ -288,26 +296,27 @@ def draw_base_element(base_value, ax):
     line.set_clip_on(False)
     ax.add_line(line)
     
-    text_out_val = plt.text(base_value, 0.33, 'base value',
+    text_out_val = ax.text(base_value, 0.33, 'base value',
                             fontsize=12, alpha=0.5,
                             horizontalalignment='center')
+
     text_out_val.set_bbox(dict(facecolor='white', edgecolor='white'))
 
 
-def draw_higher_lower_element(out_value, offset_text):
-    plt.text(out_value - offset_text, 0.405, 'higher',
+def draw_higher_lower_element(out_value, offset_text, ax):
+    ax.text(out_value - offset_text, 0.405, 'higher',
              fontsize=13, color='#FF0D57',
              horizontalalignment='right')
 
-    plt.text(out_value + offset_text, 0.405, 'lower',
+    ax.text(out_value + offset_text, 0.405, 'lower',
              fontsize=13, color='#1E88E5',
              horizontalalignment='left')
     
-    plt.text(out_value, 0.4, r'$\leftarrow$',
+    ax.text(out_value, 0.4, r'$\leftarrow$',
              fontsize=13, color='#1E88E5',
              horizontalalignment='center')
     
-    plt.text(out_value, 0.425, r'$\rightarrow$',
+    ax.text(out_value, 0.425, r'$\rightarrow$',
              fontsize=13, color='#FF0D57',
              horizontalalignment='center')
 
@@ -326,18 +335,20 @@ def update_axis_limits(ax, total_pos, pos_features, total_neg,
         max_x = max(np.max(neg_features[:, 0].astype(float)), base_value) + padding
     else:
         max_x = 0
+
     ax.set_xlim(min_x, max_x)
 
-    plt.tick_params(top=True, bottom=False, left=False, right=False, labelleft=False,
+    ax.tick_params(top=True, bottom=False, left=False, right=False, labelleft=False,
                     labeltop=True, labelbottom=False)
-    plt.locator_params(axis='x', nbins=12)
 
-    for key, spine in zip(plt.gca().spines.keys(), plt.gca().spines.values()):
+    ax.locator_params(axis='x', nbins=12)
+
+    for key, spine in zip(ax.spines.keys(), ax.spines.values()):
         if key != 'top':
             spine.set_visible(False)
 
 
-def draw_additive_plot(data, figsize, show, text_rotation=0):
+def draw_additive_plot(data, figsize, show, text_rotation=0, ax=None):
     """Draw additive plot."""
     # Turn off interactive plot
     if show is False:
@@ -350,10 +361,15 @@ def draw_additive_plot(data, figsize, show, text_rotation=0):
     base_value = data['baseValue']
     out_value = data['outValue']
     offset_text = (np.abs(total_neg) + np.abs(total_pos)) * 0.04
-    
-    # Define plots
-    fig, ax = plt.subplots(figsize=figsize)
-    
+
+    if ax:
+        fig = ax.get_figure()
+        fig.set_size_inches(*figsize)
+    else:
+        fig, ax = plt.subplots()
+        fig.set_size_inches(*figsize)
+
+
     # Compute axis limit
     update_axis_limits(ax, total_pos, pos_features, total_neg,
                        neg_features, base_value)
@@ -364,7 +380,7 @@ def draw_additive_plot(data, figsize, show, text_rotation=0):
     
     # Create bar for negative shap values
     rectangle_list, separator_list = draw_bars(out_value, neg_features, 'negative',
-                                               width_separators, width_bar)
+                                               width_separators, width_bar, ax)
     for i in rectangle_list:
         ax.add_patch(i)
     
@@ -373,7 +389,7 @@ def draw_additive_plot(data, figsize, show, text_rotation=0):
     
     # Create bar for positive shap values
     rectangle_list, separator_list = draw_bars(out_value, pos_features, 'positive',
-                                               width_separators, width_bar)
+                                               width_separators, width_bar, ax)
     for i in rectangle_list:
         ax.add_patch(i)
     
@@ -389,7 +405,7 @@ def draw_additive_plot(data, figsize, show, text_rotation=0):
                           offset_text, total_effect, min_perc=0.05, text_rotation=text_rotation)
     
     # higher lower legend
-    draw_higher_lower_element(out_value, offset_text)
+    draw_higher_lower_element(out_value, offset_text, ax)
     
     # Add label for base value
     draw_base_element(base_value, ax)
@@ -400,12 +416,12 @@ def draw_additive_plot(data, figsize, show, text_rotation=0):
 
     # Scale axis
     if data['link'] == 'logit':
-        plt.xscale('logit')
+        ax.set_xscale('logit')
         ax.xaxis.set_major_formatter(matplotlib.ticker.ScalarFormatter())
         ax.ticklabel_format(style='plain')
 
     if show:
-        plt.show()
+        fig.show()
     else:
-        return plt.gcf()
+        return fig
     
