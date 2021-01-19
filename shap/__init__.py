@@ -48,7 +48,7 @@ if have_matplotlib:
     from .plots._group_difference import group_difference as group_difference_plot
     from .plots._text import text as text_plot
 else:
-    summary_plot = unsupported
+    #summary_plot = unsupported
     decision_plot = unsupported
     multioutput_decision_plot = unsupported
     dependence_plot = unsupported

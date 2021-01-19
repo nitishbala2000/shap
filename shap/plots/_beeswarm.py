@@ -399,6 +399,7 @@ def summary_legacy(shap_values, features=None, feature_names=None, max_display=N
                  class_inds=None,
                  color_bar_label=labels["FEATURE_VALUE"],
                  cmap=colors.red_blue,
+                 ax=None,
                  # depreciated
                  auto_size_plot=None,
                  use_log_scale=False):
@@ -430,6 +431,10 @@ def summary_legacy(shap_values, features=None, feature_names=None, max_display=N
         many inches high. Passing a pair of floats will scale the plot by that
         number of inches. If None is passed then the size of the current figure will be left
         unchanged.
+
+     ax : matplotlib Axes object
+         Optionally specify an existing matplotlib Axes object, into which the plot will be placed.
+         If none, use current figure and axes
     """
 
     # support passing an explanation object
@@ -495,87 +500,95 @@ def summary_legacy(shap_values, features=None, feature_names=None, max_display=N
     if feature_names is None:
         feature_names = np.array([labels['FEATURE'] % str(i) for i in range(num_features)])
 
+    if ax:
+        fig = ax.get_figure()
+    else:
+        ax = pl.gca()
+        fig = pl.gcf()
+
     if use_log_scale:
-        pl.xscale('symlog')
+        ax.set_xscale('symlog')
 
     # plotting SHAP interaction values
     if not multi_class and len(shap_values.shape) == 3:
 
-        if plot_type == "compact_dot":
-            new_shap_values = shap_values.reshape(shap_values.shape[0], -1)
-            new_features = np.tile(features, (1, 1, features.shape[1])).reshape(features.shape[0], -1)
+        raise ValueError("SHAP interaction values not supported in this repository")
 
-            new_feature_names = []
-            for c1 in feature_names:
-                for c2 in feature_names:
-                    if c1 == c2:
-                        new_feature_names.append(c1)
-                    else:
-                        new_feature_names.append(c1 + "* - " + c2)
-
-            return summary_legacy(
-                new_shap_values, new_features, new_feature_names,
-                max_display=max_display, plot_type="dot", color=color, axis_color=axis_color,
-                title=title, alpha=alpha, show=show, sort=sort,
-                color_bar=color_bar, plot_size=plot_size, class_names=class_names,
-                color_bar_label="*" + color_bar_label
-            )
-
-        if max_display is None:
-            max_display = 7
-        else:
-            max_display = min(len(feature_names), max_display)
-
-        sort_inds = np.argsort(-np.abs(shap_values.sum(1)).sum(0))
-
-        # get plotting limits
-        delta = 1.0 / (shap_values.shape[1] ** 2)
-        slow = np.nanpercentile(shap_values, delta)
-        shigh = np.nanpercentile(shap_values, 100 - delta)
-        v = max(abs(slow), abs(shigh))
-        slow = -v
-        shigh = v
-
-        pl.figure(figsize=(1.5 * max_display + 1, 0.8 * max_display + 1))
-        pl.subplot(1, max_display, 1)
-        proj_shap_values = shap_values[:, sort_inds[0], sort_inds]
-        proj_shap_values[:, 1:] *= 2  # because off diag effects are split in half
-        summary_legacy(
-            proj_shap_values, features[:, sort_inds] if features is not None else None,
-            feature_names=feature_names[sort_inds],
-            sort=False, show=False, color_bar=False,
-            plot_size=None,
-            max_display=max_display
-        )
-        pl.xlim((slow, shigh))
-        pl.xlabel("")
-        title_length_limit = 11
-        pl.title(shorten_text(feature_names[sort_inds[0]], title_length_limit))
-        for i in range(1, min(len(sort_inds), max_display)):
-            ind = sort_inds[i]
-            pl.subplot(1, max_display, i + 1)
-            proj_shap_values = shap_values[:, ind, sort_inds]
-            proj_shap_values *= 2
-            proj_shap_values[:, i] /= 2  # because only off diag effects are split in half
-            summary_legacy(
-                proj_shap_values, features[:, sort_inds] if features is not None else None,
-                sort=False,
-                feature_names=["" for i in range(len(feature_names))],
-                show=False,
-                color_bar=False,
-                plot_size=None,
-                max_display=max_display
-            )
-            pl.xlim((slow, shigh))
-            pl.xlabel("")
-            if i == min(len(sort_inds), max_display) // 2:
-                pl.xlabel(labels['INTERACTION_VALUE'])
-            pl.title(shorten_text(feature_names[ind], title_length_limit))
-        pl.tight_layout(pad=0, w_pad=0, h_pad=0.0)
-        pl.subplots_adjust(hspace=0, wspace=0.1)
-        if show:
-            pl.show()
-        return
+        # if plot_type == "compact_dot":
+        #     new_shap_values = shap_values.reshape(shap_values.shape[0], -1)
+        #     new_features = np.tile(features, (1, 1, features.shape[1])).reshape(features.shape[0], -1)
+        #
+        #     new_feature_names = []
+        #     for c1 in feature_names:
+        #         for c2 in feature_names:
+        #             if c1 == c2:
+        #                 new_feature_names.append(c1)
+        #             else:
+        #                 new_feature_names.append(c1 + "* - " + c2)
+        #
+        #     return summary_legacy(
+        #         new_shap_values, new_features, new_feature_names,
+        #         max_display=max_display, plot_type="dot", color=color, axis_color=axis_color,
+        #         title=title, alpha=alpha, show=show, sort=sort,
+        #         color_bar=color_bar, plot_size=plot_size, class_names=class_names,
+        #         color_bar_label="*" + color_bar_label
+        #     )
+        #
+        # if max_display is None:
+        #     max_display = 7
+        # else:
+        #     max_display = min(len(feature_names), max_display)
+        #
+        # sort_inds = np.argsort(-np.abs(shap_values.sum(1)).sum(0))
+        #
+        # # get plotting limits
+        # delta = 1.0 / (shap_values.shape[1] ** 2)
+        # slow = np.nanpercentile(shap_values, delta)
+        # shigh = np.nanpercentile(shap_values, 100 - delta)
+        # v = max(abs(slow), abs(shigh))
+        # slow = -v
+        # shigh = v
+        #
+        # pl.figure(figsize=(1.5 * max_display + 1, 0.8 * max_display + 1))
+        # pl.subplot(1, max_display, 1)
+        # proj_shap_values = shap_values[:, sort_inds[0], sort_inds]
+        # proj_shap_values[:, 1:] *= 2  # because off diag effects are split in half
+        # summary_legacy(
+        #     proj_shap_values, features[:, sort_inds] if features is not None else None,
+        #     feature_names=feature_names[sort_inds],
+        #     sort=False, show=False, color_bar=False,
+        #     plot_size=None,
+        #     max_display=max_display
+        # )
+        # pl.xlim((slow, shigh))
+        # pl.xlabel("")
+        # title_length_limit = 11
+        # pl.title(shorten_text(feature_names[sort_inds[0]], title_length_limit))
+        # for i in range(1, min(len(sort_inds), max_display)):
+        #     ind = sort_inds[i]
+        #     pl.subplot(1, max_display, i + 1)
+        #     proj_shap_values = shap_values[:, ind, sort_inds]
+        #     proj_shap_values *= 2
+        #     proj_shap_values[:, i] /= 2  # because only off diag effects are split in half
+        #     summary_legacy(
+        #         proj_shap_values, features[:, sort_inds] if features is not None else None,
+        #         sort=False,
+        #         feature_names=["" for i in range(len(feature_names))],
+        #         show=False,
+        #         color_bar=False,
+        #         plot_size=None,
+        #         max_display=max_display
+        #     )
+        #     pl.xlim((slow, shigh))
+        #     pl.xlabel("")
+        #     if i == min(len(sort_inds), max_display) // 2:
+        #         pl.xlabel(labels['INTERACTION_VALUE'])
+        #     pl.title(shorten_text(feature_names[ind], title_length_limit))
+        # pl.tight_layout(pad=0, w_pad=0, h_pad=0.0)
+        # pl.subplots_adjust(hspace=0, wspace=0.1)
+        # if show:
+        #     pl.show()
+        # return
 
     if max_display is None:
         max_display = 20
@@ -592,16 +605,17 @@ def summary_legacy(shap_values, features=None, feature_names=None, max_display=N
 
     row_height = 0.4
     if plot_size == "auto":
-        pl.gcf().set_size_inches(8, len(feature_order) * row_height + 1.5)
+        fig.set_size_inches(8, len(feature_order) * row_height + 1.5)
     elif type(plot_size) in (list, tuple):
-        pl.gcf().set_size_inches(plot_size[0], plot_size[1])
+        fig.set_size_inches(plot_size[0], plot_size[1])
     elif plot_size is not None:
-        pl.gcf().set_size_inches(8, len(feature_order) * plot_size + 1.5)
-    pl.axvline(x=0, color="#999999", zorder=-1)
+        fig.set_size_inches(8, len(feature_order) * plot_size + 1.5)
+
+    ax.axvline(x=0, color="#999999", zorder=-1)
 
     if plot_type == "dot":
         for pos, i in enumerate(feature_order):
-            pl.axhline(y=pos, color="#cccccc", lw=0.5, dashes=(1, 5), zorder=-1)
+            ax.axhline(y=pos, color="#cccccc", lw=0.5, dashes=(1, 5), zorder=-1)
             shaps = shap_values[:, i]
             values = None if features is None else features[:, i]
             inds = np.arange(len(shaps))
@@ -648,7 +662,7 @@ def summary_legacy(shap_values, features=None, feature_names=None, max_display=N
 
                 # plot the nan values in the interaction feature as grey
                 nan_mask = np.isnan(values)
-                pl.scatter(shaps[nan_mask], pos + ys[nan_mask], color="#777777", vmin=vmin,
+                ax.scatter(shaps[nan_mask], pos + ys[nan_mask], color="#777777", vmin=vmin,
                            vmax=vmax, s=16, alpha=alpha, linewidth=0,
                            zorder=3, rasterized=len(shaps) > 500)
 
@@ -658,18 +672,18 @@ def summary_legacy(shap_values, features=None, feature_names=None, max_display=N
                 cvals_imp[np.isnan(cvals)] = (vmin + vmax) / 2.0
                 cvals[cvals_imp > vmax] = vmax
                 cvals[cvals_imp < vmin] = vmin
-                pl.scatter(shaps[np.invert(nan_mask)], pos + ys[np.invert(nan_mask)],
+                ax.scatter(shaps[np.invert(nan_mask)], pos + ys[np.invert(nan_mask)],
                            cmap=cmap, vmin=vmin, vmax=vmax, s=16,
                            c=cvals, alpha=alpha, linewidth=0,
                            zorder=3, rasterized=len(shaps) > 500)
             else:
 
-                pl.scatter(shaps, pos + ys, s=16, alpha=alpha, linewidth=0, zorder=3,
+                ax.scatter(shaps, pos + ys, s=16, alpha=alpha, linewidth=0, zorder=3,
                            color=color if colored_feature else "#777777", rasterized=len(shaps) > 500)
 
     elif plot_type == "violin":
         for pos, i in enumerate(feature_order):
-            pl.axhline(y=pos, color="#cccccc", lw=0.5, dashes=(1, 5), zorder=-1)
+            ax.axhline(y=pos, color="#cccccc", lw=0.5, dashes=(1, 5), zorder=-1)
 
         if features is not None:
             global_low = np.nanpercentile(shap_values[:, :len(feature_names)].flatten(), 1)
@@ -719,7 +733,7 @@ def summary_legacy(shap_values, features=None, feature_names=None, max_display=N
 
                 # plot the nan values in the interaction feature as grey
                 nan_mask = np.isnan(values)
-                pl.scatter(shaps[nan_mask], np.ones(shap_values[nan_mask].shape[0]) * pos,
+                ax.scatter(shaps[nan_mask], np.ones(shap_values[nan_mask].shape[0]) * pos,
                            color="#777777", vmin=vmin, vmax=vmax, s=9,
                            alpha=alpha, linewidth=0, zorder=1)
                 # plot the non-nan values colored by the trimmed feature value
@@ -728,7 +742,7 @@ def summary_legacy(shap_values, features=None, feature_names=None, max_display=N
                 cvals_imp[np.isnan(cvals)] = (vmin + vmax) / 2.0
                 cvals[cvals_imp > vmax] = vmax
                 cvals[cvals_imp < vmin] = vmin
-                pl.scatter(shaps[np.invert(nan_mask)], np.ones(shap_values[np.invert(nan_mask)].shape[0]) * pos,
+                ax.scatter(shaps[np.invert(nan_mask)], np.ones(shap_values[np.invert(nan_mask)].shape[0]) * pos,
                            cmap=cmap, vmin=vmin, vmax=vmax, s=9,
                            c=cvals, alpha=alpha, linewidth=0, zorder=1)
                 # smooth_values -= nxp.nanpercentile(smooth_values, 5)
@@ -738,12 +752,12 @@ def summary_legacy(shap_values, features=None, feature_names=None, max_display=N
                     smooth_values /= vmax - vmin
                 for i in range(len(xs) - 1):
                     if ds[i] > 0.05 or ds[i + 1] > 0.05:
-                        pl.fill_between([xs[i], xs[i + 1]], [pos + ds[i], pos + ds[i + 1]],
+                        ax.fill_between([xs[i], xs[i + 1]], [pos + ds[i], pos + ds[i + 1]],
                                         [pos - ds[i], pos - ds[i + 1]], color=colors.red_blue_no_bounds(smooth_values[i]),
                                         zorder=2)
 
         else:
-            parts = pl.violinplot(shap_values[:, feature_order], range(len(feature_order)), points=200, vert=False,
+            parts = ax.violinplot(shap_values[:, feature_order], range(len(feature_order)), points=200, vert=False,
                                   widths=0.7,
                                   showmeans=False, showextrema=False, showmedians=False)
 
@@ -810,16 +824,16 @@ def summary_legacy(shap_values, features=None, feature_names=None, max_display=N
                 y = ys[i, :] / scale
                 c = pl.get_cmap(color)(i / (
                         nbins - 1)) if color in pl.cm.datad else color  # if color is a cmap, use it, otherwise use a color
-                pl.fill_between(x_points, pos - y, pos + y, facecolor=c)
-        pl.xlim(shap_min, shap_max)
+                ax.fill_between(x_points, pos - y, pos + y, facecolor=c)
+        ax.set_xlim(shap_min, shap_max)
 
     elif not multi_class and plot_type == "bar":
         feature_inds = feature_order[:max_display]
         y_pos = np.arange(len(feature_inds))
         global_shap_values = np.abs(shap_values).mean(0)
-        pl.barh(y_pos, global_shap_values[feature_inds], 0.7, align='center', color=color)
-        pl.yticks(y_pos, fontsize=13)
-        pl.gca().set_yticklabels([feature_names[i] for i in feature_inds])
+        ax.barh(y_pos, global_shap_values[feature_inds], 0.7, align='center', color=color)
+        ax.set_yticks(y_pos)
+        ax.set_yticklabels([feature_names[i] for i in feature_inds], fontsize=13)
 
     elif multi_class and plot_type == "bar":
         if class_names is None:
@@ -834,14 +848,14 @@ def summary_legacy(shap_values, features=None, feature_names=None, max_display=N
             class_inds = range(len(shap_values))
         for i, ind in enumerate(class_inds):
             global_shap_values = np.abs(shap_values[ind]).mean(0)
-            pl.barh(
+            ax.barh(
                 y_pos, global_shap_values[feature_inds], 0.7, left=left_pos, align='center',
                 color=color(i), label=class_names[ind]
             )
             left_pos += global_shap_values[feature_inds]
-        pl.yticks(y_pos, fontsize=13)
-        pl.gca().set_yticklabels([feature_names[i] for i in feature_inds])
-        pl.legend(frameon=False, fontsize=12)
+        ax.set_yticks(y_pos)
+        ax.set_yticklabels([feature_names[i] for i in feature_inds], fontsize=13)
+        ax.legend(frameon=False, fontsize=12)
 
     # draw the color bar
     if color_bar and features is not None and plot_type != "bar" and \
@@ -849,7 +863,7 @@ def summary_legacy(shap_values, features=None, feature_names=None, max_display=N
         import matplotlib.cm as cm
         m = cm.ScalarMappable(cmap=cmap if plot_type != "layered_violin" else pl.get_cmap(color))
         m.set_array([0, 1])
-        cb = pl.colorbar(m, ticks=[0, 1], aspect=1000)
+        cb = fig.colorbar(m, ticks=[0, 1], aspect=1000)
         cb.set_ticklabels([labels['FEATURE_VALUE_LOW'], labels['FEATURE_VALUE_HIGH']])
         cb.set_label(color_bar_label, size=12, labelpad=0)
         cb.ax.tick_params(labelsize=11, length=0)
@@ -859,20 +873,21 @@ def summary_legacy(shap_values, features=None, feature_names=None, max_display=N
         cb.ax.set_aspect((bbox.height - 0.9) * 20)
         # cb.draw_all()
 
-    pl.gca().xaxis.set_ticks_position('bottom')
-    pl.gca().yaxis.set_ticks_position('none')
-    pl.gca().spines['right'].set_visible(False)
-    pl.gca().spines['top'].set_visible(False)
-    pl.gca().spines['left'].set_visible(False)
-    pl.gca().tick_params(color=axis_color, labelcolor=axis_color)
-    pl.yticks(range(len(feature_order)), [feature_names[i] for i in feature_order], fontsize=13)
+    ax.xaxis.set_ticks_position('bottom')
+    ax.yaxis.set_ticks_position('none')
+    ax.spines['right'].set_visible(False)
+    ax.spines['top'].set_visible(False)
+    ax.spines['left'].set_visible(False)
+    ax.tick_params(color=axis_color, labelcolor=axis_color)
+    ax.set_yticks(range(len(feature_order)))
+    ax.set_yticklabels([feature_names[i] for i in feature_order], fontsize=13)
     if plot_type != "bar":
-        pl.gca().tick_params('y', length=20, width=0.5, which='major')
-    pl.gca().tick_params('x', labelsize=11)
-    pl.ylim(-1, len(feature_order))
+        ax.tick_params('y', length=20, width=0.5, which='major')
+    ax.tick_params('x', labelsize=11)
+    ax.set_ylim(-1, len(feature_order))
     if plot_type == "bar":
-        pl.xlabel(labels['GLOBAL_VALUE'], fontsize=13)
+        ax.set_xlabel(labels['GLOBAL_VALUE'], fontsize=13)
     else:
-        pl.xlabel(labels['VALUE'], fontsize=13)
+        ax.set_xlabel(labels['VALUE'], fontsize=13)
     if show:
-        pl.show()
+        fig.show()
